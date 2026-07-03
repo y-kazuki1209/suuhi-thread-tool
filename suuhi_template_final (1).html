@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数秘カルーセル テンプレート</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@400;700;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#060c14;display:flex;flex-direction:column;align-items:center;gap:32px;padding:48px 20px;font-family:'Noto Sans JP',sans-serif;}
+
+/* ===== ダウンロードボタンUI ===== */
+#dl-area{
+  position:fixed;top:20px;right:20px;z-index:9999;
+  display:flex;flex-direction:column;gap:10px;align-items:flex-end;
+}
+#dl-btn{
+  font-family:'Press Start 2P',monospace;font-size:9px;
+  background:#6de0b2;color:#06120e;border:none;cursor:pointer;
+  padding:14px 20px;border-radius:4px;letter-spacing:0.05em;
+  box-shadow:0 4px 0 #0e3d26;
+}
+#dl-btn:hover{background:#a8f0d4;}
+#dl-btn:disabled{background:#444;color:#888;box-shadow:none;cursor:not-allowed;}
+#dl-status{
+  font-family:'Press Start 2P',monospace;font-size:7px;
+  color:#6de0b2;text-align:right;line-height:1.8;
+}
+
+.slide-label{color:#4ade80;font-family:'Press Start 2P',monospace;font-size:9px;letter-spacing:0.1em;margin-bottom:6px;opacity:0.6;}
+.slide{width:400px;min-height:400px;border-radius:10px;position:relative;overflow:hidden;display:flex;flex-direction:column;}
+.slide::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.012) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.012) 1px,transparent 1px);background-size:8px 8px;pointer-events:none;z-index:1;}
+.slide::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.07) 3px,rgba(0,0,0,0.07) 4px);pointer-events:none;z-index:2;}
+.inner{position:relative;z-index:3;padding:28px 28px 24px;display:flex;flex-direction:column;flex:1;}
+:root{--mint:#a8f0d4;--mint2:#6de0b2;--mint3:#3ab882;--mint-dark:#0e3d26;--lav:#c4b5fd;--lav2:#a78bfa;--bg1:#0b1924;--border:rgba(168,240,212,0.2);--bright:#e8fdf4;--muted:rgba(232,253,244,0.82);--gold:#fbbf24;--red:#f87171;}
+.acct{position:absolute;bottom:11px;right:15px;font-family:'Press Start 2P',monospace;font-size:7px;color:rgba(255,255,255,0.15);z-index:5;}
+.s1{background:linear-gradient(160deg,#06121e 0%,#0b1f30 55%,#081622 100%);border:2px solid var(--mint2);box-shadow:0 0 32px rgba(109,224,178,0.18);}
+.s1-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.s1-badge{font-family:'Press Start 2P',monospace;font-size:7px;color:var(--mint2);border:1px solid var(--mint2);padding:4px 9px;border-radius:2px;letter-spacing:0.06em;}
+.s1-class{font-family:'Press Start 2P',monospace;font-size:7px;color:#fff;background:rgba(109,224,178,0.15);border:1px solid var(--mint3);padding:4px 9px;border-radius:2px;}
+.s1-maintitle{text-align:center;margin-bottom:14px;}
+.s1-maintitle .t1{font-size:34px;font-weight:900;color:#e8fdf4;line-height:1.25;letter-spacing:0.02em;text-shadow:0 0 20px rgba(168,240,212,0.25);}
+.s1-maintitle .num{color:var(--mint);font-size:44px;}
+.s1-body{display:flex;gap:16px;align-items:flex-start;}
+.char-frame{width:118px;flex-shrink:0;border:2px solid var(--mint2);border-radius:4px;background:rgba(13,32,48,0.8);display:flex;flex-direction:column;align-items:center;padding:10px 6px 8px;position:relative;}
+.char-name-en{font-family:'Press Start 2P',monospace;font-size:6px;color:var(--mint2);margin-top:6px;letter-spacing:0.05em;text-align:center;}
+.hp-bar-wrap{width:100%;margin-top:5px;}
+.hp-label{font-family:'Press Start 2P',monospace;font-size:6px;color:#4ade80;margin-bottom:3px;}
+.bar-bg{height:6px;background:rgba(255,255,255,0.08);border-radius:1px;overflow:hidden;}
+.bar-hp{height:100%;background:#4ade80;width:88%;}
+.s1-info{flex:1;}
+.info-row{display:flex;align-items:baseline;gap:6px;margin-bottom:7px;}
+.info-key{font-family:'Press Start 2P',monospace;font-size:6px;color:var(--muted);width:44px;flex-shrink:0;}
+.info-val{font-size:12px;font-weight:700;color:var(--bright);}
+.info-val.ac{color:var(--mint2);}
+.s1-catch{margin-top:10px;font-size:11px;color:var(--muted);line-height:1.8;}
+.s2{background:var(--bg1);border:1.5px solid var(--border);}
+.speech{border:2px solid var(--mint2);border-radius:4px;padding:16px 18px;background:rgba(168,240,212,0.05);position:relative;margin-bottom:24px;}
+.speech::after{content:'▼';position:absolute;bottom:-20px;left:22px;color:var(--mint2);font-size:13px;}
+.speech-text{color:var(--bright);font-size:15px;line-height:1.9;font-weight:700;}
+.s2-body{color:var(--muted);font-size:13px;line-height:2;margin-top:8px;}
+.s2-body strong{color:var(--mint2);}
+.s-content{background:var(--bg1);border:1.5px solid var(--border);}
+.ability-tag{font-family:'Press Start 2P',monospace;font-size:7px;color:var(--lav2);border:1px solid rgba(167,139,250,0.3);padding:3px 8px;border-radius:2px;display:inline-block;margin-bottom:14px;}
+.ability-name{color:var(--mint);font-size:18px;font-weight:900;line-height:1.45;margin-bottom:4px;}
+.ability-name em{color:var(--lav);font-style:normal;display:block;}
+.divider{height:1px;background:var(--border);margin:12px 0;}
+.ability-desc{color:var(--muted);font-size:13px;line-height:2;}
+.ability-desc strong{color:var(--bright);}
+.stat-block{margin-top:14px;display:flex;flex-direction:column;gap:10px;}
+.stat-row{display:flex;align-items:center;gap:10px;}
+.stat-jp{font-size:11px;font-weight:700;width:58px;flex-shrink:0;}
+.stat-bar-bg{flex:1;height:9px;background:rgba(255,255,255,0.07);border-radius:1px;overflow:hidden;border:1px solid rgba(255,255,255,0.04);}
+.stat-bar-fill{height:100%;border-radius:1px;}
+.stat-num{font-family:'Press Start 2P',monospace;font-size:8px;width:22px;text-align:right;flex-shrink:0;}
+.s6{background:var(--bg1);border:1.5px solid rgba(196,181,253,0.28);}
+.neg{color:rgba(255,255,255,0.35);font-size:12px;line-height:2;text-decoration:line-through;text-decoration-color:rgba(248,113,113,0.45);margin-bottom:14px;}
+.unlock-label{font-family:'Press Start 2P',monospace;font-size:8px;color:var(--gold);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.unlock-label::after{content:'>>>'; font-size:7px;opacity:0.6;}
+.pos-list{list-style:none;display:flex;flex-direction:column;gap:10px;margin-bottom:18px;}
+.pos-list li{color:var(--bright);font-size:14px;font-weight:700;display:flex;align-items:center;gap:10px;}
+.pos-list li::before{content:'*';color:var(--mint2);font-size:14px;flex-shrink:0;}
+.final-box{background:rgba(168,240,212,0.07);border:1px solid rgba(168,240,212,0.2);border-radius:4px;padding:12px 14px;color:var(--muted);font-size:12px;line-height:1.9;}
+.final-box strong{color:var(--mint2);font-size:13px;}
+.s7{background:linear-gradient(145deg,#0b2618,#091620);border:2px solid var(--mint2);box-shadow:0 0 24px rgba(109,224,178,0.14);}
+.cta-top{font-family:'Press Start 2P',monospace;font-size:8px;color:var(--mint2);text-align:center;margin-bottom:20px;letter-spacing:0.07em;}
+.cta-title{color:var(--bright);font-size:20px;font-weight:900;text-align:center;line-height:1.5;margin-bottom:18px;}
+.cta-title span{color:var(--mint);}
+.cta-body{color:var(--muted);font-size:13px;line-height:2;text-align:center;margin-bottom:22px;}
+.cta-btn{display:block;background:var(--mint2);color:#06120e;font-family:'Press Start 2P',monospace;font-size:9px;font-weight:900;text-align:center;padding:14px 0;border-radius:4px;letter-spacing:0.04em;margin:0 8px;box-shadow:0 4px 0 var(--mint-dark);}
+.cta-free{font-family:'Press Start 2P',monospace;font-size:7px;color:var(--muted);text-align:center;margin-top:12px;}
+</style>
+</head>
+<body>
+
+<!-- ダウンロードボタン -->
+<div id="dl-area">
+  <button id="dl-btn">▶ 7枚まとめてDL</button>
+  <div id="dl-status"></div>
+</div>
+
+<div id="slides"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+/* ============================================================
+   ★ ここだけ書き換えれば全スライドが自動生成されます ★
+   ============================================================ */
+var DATA = {
+  number:     '2',
+  charNo:     '002',
+  job:        'ヒーラー',
+  type:       'サポーター',
+  rank:       '★★★★☆',
+  classLabel: 'HEALER CLASS',
+  catchCopy:  '「優しすぎて、損してない？」と言われがちなあなたへ。',
+  intro_question: '「なんで自分ばかり<br>気を使ってるんだろう…」',
+  intro_body: 'って思ったこと、ない？<br><br>それ、弱さじゃなくて<br><strong>「数字」の話</strong>かもしれない。<br><br>数秘NUMBERが持つ<br>本当のステータスを解説します。',
+  abilities: [
+    {
+      tag:   'ABILITY 01',
+      title: '場の空気を読みすぎて',
+      em:    '自分の意見が言えなくなる',
+      desc:  'これ、優柔不断じゃなくて<br><strong>「全員が納得する答えを探す」</strong>本能。<br><br>NUMBERは場の調和を保つことに<br>全エネルギーを注いでいる。',
+      stats: [
+        { label:'共感力',   color:'#6de0b2', val:92 },
+        { label:'自己主張', color:'#a78bfa', val:28 }
+      ]
+    },
+    {
+      tag:   'ABILITY 02',
+      title: '「どっちでもいいよ」と言いながら',
+      em:    '内心めちゃくちゃ気にしてる',
+      desc:  '本当はちゃんと意見がある。<br>でも、それを言って<br><strong>雰囲気が壊れる方が怖い。</strong><br><br>気を使いすぎて自分が消えてしまうタイプ。',
+      stats: [
+        { label:'体力',    color:'#4ade80', val:40 },
+        { label:'気遣い力', color:'#60a5fa', val:95 }
+      ]
+    },
+    {
+      tag:   'ABILITY 03',
+      title: '仲良い人のためなら無限に動けるのに',
+      em:    '自分のためには動けない',
+      desc:  '「誰かのため」が最大のエンジン。<br><br><strong>自分のことは後回し</strong>になりがちなのが<br>NUMBERの唯一の弱点。',
+      stats: [
+        { label:'奉仕精神', color:'#fbbf24', val:98 },
+        { label:'自己愛',   color:'#f87171', val:22 }
+      ]
+    }
+  ],
+  negatives: ['「優しすぎる」', '「自己主張が弱い」', '「八方美人」'],
+  positives: ['場を整える天才', '人の気持ちを瞬時に読める', 'チームの潤滑油になれる'],
+  closing:   'NUMBERのあなたがいるだけで、<br>その場の空気が柔らかくなる。<br><br><strong>それ、才能ですよ。</strong>'
+};
+/* ============================================================
+   ★ ここより下は触らなくてOKです ★
+   ============================================================ */
+
+function r(str) { return str.replace(/NUMBER/g, DATA.number + '番'); }
+function pad(n) { return String(n).padStart(2,'0'); }
+
+function statBars(stats) {
+  return stats.map(function(s) {
+    return '<div class="stat-row">'
+      + '<span class="stat-jp" style="color:' + s.color + ';">' + s.label + '</span>'
+      + '<div class="stat-bar-bg"><div class="stat-bar-fill" style="background:' + s.color + ';width:' + s.val + '%;"></div></div>'
+      + '<span class="stat-num" style="color:' + s.color + ';">' + s.val + '</span>'
+      + '</div>';
+  }).join('');
+}
+
+function wrap(idx, cssClass, inner) {
+  return '<div class="slide-label">SLIDE ' + pad(idx) + ' / 07</div>'
+    + '<div class="slide ' + cssClass + '" id="slide-' + idx + '">'
+    + inner
+    + '<div class="acct">@yoshi_suuhi</div>'
+    + '</div>';
+}
+
+var CROSS = '<svg width="18" height="18" viewBox="0 0 18 18" style="position:absolute;top:6px;right:6px;image-rendering:pixelated;" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="0" width="6" height="18" fill="#6de0b2"/><rect x="0" y="6" width="18" height="6" fill="#6de0b2"/></svg>';
+var CHAR = '<svg width="72" height="86" viewBox="0 0 72 86" style="image-rendering:pixelated;" xmlns="http://www.w3.org/2000/svg"><ellipse cx="36" cy="8" rx="16" ry="4" fill="none" stroke="#fbbf24" stroke-width="2"/><rect x="20" y="10" width="32" height="6" fill="#3ab882"/><rect x="16" y="14" width="40" height="4" fill="#3ab882"/><rect x="22" y="18" width="28" height="22" fill="#f4d0a0"/><rect x="18" y="24" width="4" height="8" fill="#f4d0a0"/><rect x="50" y="24" width="4" height="8" fill="#f4d0a0"/><rect x="28" y="26" width="6" height="6" fill="#3a2060"/><rect x="38" y="26" width="6" height="6" fill="#3a2060"/><rect x="29" y="26" width="2" height="2" fill="#fff"/><rect x="39" y="26" width="2" height="2" fill="#fff"/><rect x="28" y="24" width="2" height="2" fill="#3a2060"/><rect x="32" y="24" width="2" height="2" fill="#3a2060"/><rect x="38" y="24" width="2" height="2" fill="#3a2060"/><rect x="42" y="24" width="2" height="2" fill="#3a2060"/><rect x="30" y="34" width="2" height="2" fill="#c47070"/><rect x="40" y="34" width="2" height="2" fill="#c47070"/><rect x="32" y="36" width="8" height="2" fill="#c47070"/><rect x="22" y="32" width="6" height="4" fill="#f4a0a0" opacity="0.5"/><rect x="44" y="32" width="6" height="4" fill="#f4a0a0" opacity="0.5"/><rect x="18" y="40" width="36" height="30" fill="#d0f5e8"/><rect x="18" y="40" width="6" height="30" fill="#a8f0d4"/><rect x="48" y="40" width="6" height="30" fill="#a8f0d4"/><rect x="14" y="44" width="6" height="26" fill="#6de0b2"/><rect x="52" y="44" width="6" height="26" fill="#6de0b2"/><rect x="32" y="46" width="8" height="2" fill="#3ab882"/><rect x="35" y="43" width="2" height="8" fill="#3ab882"/><rect x="22" y="70" width="10" height="12" fill="#6de0b2"/><rect x="40" y="70" width="10" height="12" fill="#6de0b2"/><rect x="22" y="80" width="12" height="4" fill="#3ab882"/><rect x="38" y="80" width="12" height="4" fill="#3ab882"/><rect x="58" y="30" width="4" height="44" fill="#8b6914"/><rect x="54" y="22" width="12" height="12" fill="#a8f0d4"/><rect x="56" y="20" width="8" height="4" fill="#a8f0d4"/><rect x="52" y="24" width="4" height="8" fill="#a8f0d4"/><rect x="64" y="24" width="4" height="8" fill="#a8f0d4"/><rect x="56" y="24" width="4" height="4" fill="#fff" opacity="0.7"/><rect x="46" y="14" width="4" height="4" fill="#a8f0d4" opacity="0.9"/><rect x="6" y="20" width="4" height="4" fill="#c4b5fd" opacity="0.8"/><rect x="2" y="32" width="3" height="3" fill="#60a5fa" opacity="0.7"/><rect x="10" y="12" width="3" height="3" fill="#fbbf24" opacity="0.8"/></svg>';
+
+var slides_html = '';
+slides_html += wrap(1, 's1',
+  '<div class="inner">'
+  + '<div class="s1-header"><span class="s1-badge">CHARACTER No.' + DATA.charNo + '</span><span class="s1-class">+ ' + DATA.classLabel + '</span></div>'
+  + '<div class="s1-maintitle"><div class="t1">数秘<span class="num">' + DATA.number + '番</span>の<br>取扱説明書</div></div>'
+  + '<div class="s1-body">'
+  + '<div class="char-frame">' + CROSS + CHAR + '<div class="char-name-en">' + DATA.job + '</div><div class="hp-bar-wrap"><div class="hp-label">HP</div><div class="bar-bg"><div class="bar-hp"></div></div></div></div>'
+  + '<div class="s1-info">'
+  + '<div class="info-row"><span class="info-key">JOB</span><span class="info-val ac">' + DATA.job + '</span></div>'
+  + '<div class="info-row"><span class="info-key">TYPE</span><span class="info-val">' + DATA.type + '</span></div>'
+  + '<div class="info-row"><span class="info-key">RANK</span><span class="info-val ac">' + DATA.rank + '</span></div>'
+  + '<div class="s1-catch">' + DATA.catchCopy + '</div>'
+  + '</div></div></div>'
+);
+slides_html += wrap(2, 's2',
+  '<div class="inner" style="justify-content:center;">'
+  + '<div class="speech"><div class="speech-text">' + DATA.intro_question + '</div></div>'
+  + '<div style="height:20px;"></div>'
+  + '<div class="s2-body">' + r(DATA.intro_body) + '</div>'
+  + '</div>'
+);
+DATA.abilities.forEach(function(ab, i) {
+  slides_html += wrap(3 + i, 's-content',
+    '<div class="inner">'
+    + '<div class="ability-tag">' + ab.tag + '</div>'
+    + '<div class="ability-name">' + r(ab.title) + '<em>' + r(ab.em) + '</em></div>'
+    + '<div class="divider"></div>'
+    + '<div class="ability-desc">' + r(ab.desc) + '</div>'
+    + '<div class="stat-block">' + statBars(ab.stats) + '</div>'
+    + '</div>'
+  );
+});
+slides_html += wrap(6, 's6',
+  '<div class="inner" style="justify-content:center;">'
+  + '<div class="neg">' + DATA.negatives.join('&emsp;') + '</div>'
+  + '<div class="unlock-label">TALENT UNLOCK</div>'
+  + '<ul class="pos-list">' + DATA.positives.map(function(p){ return '<li>' + p + '</li>'; }).join('') + '</ul>'
+  + '<div class="final-box">' + r(DATA.closing) + '</div>'
+  + '</div>'
+);
+slides_html += wrap(7, 's7',
+  '<div class="inner" style="justify-content:center;">'
+  + '<div class="cta-top">▶ FREE DIAGNOSIS START ◀</div>'
+  + '<div class="cta-title">自分の<span>才能と数字</span>を<br>知りたい人へ</div>'
+  + '<div class="cta-body">プロフのLINEから<br>生年月日を送るだけで<br>無料でキャリア数秘診断できます✨<br><br>自分の取扱説明書、受け取ってみてください。</div>'
+  + '<div class="cta-btn">▶ プロフのLINEへ ◀</div>'
+  + '<div class="cta-free">— 完全無料 / 登録不要 —</div>'
+  + '</div>'
+);
+document.getElementById('slides').innerHTML = slides_html;
+
+/* ===== 一括ダウンロード処理 ===== */
+document.getElementById('dl-btn').addEventListener('click', function() {
+  var btn = document.getElementById('dl-btn');
+  var status = document.getElementById('dl-status');
+  btn.disabled = true;
+  btn.textContent = '生成中...';
+
+  var total = 7;
+  var current = 0;
+
+  function downloadNext() {
+    current++;
+    if (current > total) {
+      btn.disabled = false;
+      btn.textContent = '▶ 7枚まとめてDL';
+      status.textContent = '完了！ダウンロードフォルダを確認してね';
+      return;
+    }
+    status.textContent = 'SLIDE ' + current + ' / ' + total + ' を生成中...';
+    var el = document.getElementById('slide-' + current);
+    html2canvas(el, {
+      scale: 2,
+      backgroundColor: null,
+      useCORS: true,
+      logging: false
+    }).then(function(canvas) {
+      var link = document.createElement('a');
+      link.download = 'suuhi' + DATA.number + '_slide' + String(current).padStart(2,'0') + '.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      setTimeout(downloadNext, 600);
+    });
+  }
+
+  downloadNext();
+});
+</script>
+</body>
+</html>
