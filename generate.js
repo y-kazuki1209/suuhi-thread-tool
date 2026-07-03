@@ -18,42 +18,113 @@ const CROSS_BLOCK_PATTERN = /var CROSS = '[\s\S]*?';/;
 const CHAR_BLOCK_PATTERN = /var CHAR = '[\s\S]*?';/;
 
 /* ============================================================
-   キャラクター素体（顔・ローブ・ブーツ）
-   ローブの配色は theme（mint/mint2/mint3）で差し替わる
+   キャラクター素体（顔・頭部・胴体・脚）
+   職業（charKey）ごとにシルエットそのものが変わる：
+     healer      = フード＋ハロー＋ローブ
+     entertainer = パーティーハット＋蝶ネクタイ＋燕尾服
+     builder     = ヘルメット＋オーバーオール＋工具ベルト
+   配色は theme（torso/mint/mint2/mint3/mintDark）で差し替わる
    ============================================================ */
-function charBody(t) {
+function faceBase(t) {
   return ''
-    + '<ellipse cx="36" cy="8" rx="16" ry="4" fill="none" stroke="' + t.mint2 + '" stroke-width="2"/>'
-    + '<rect x="20" y="10" width="32" height="6" fill="' + t.mint3 + '"/>'
-    + '<rect x="16" y="14" width="40" height="4" fill="' + t.mint3 + '"/>'
     + '<rect x="22" y="18" width="28" height="22" fill="#f4d0a0"/>'
     + '<rect x="18" y="24" width="4" height="8" fill="#f4d0a0"/>'
     + '<rect x="50" y="24" width="4" height="8" fill="#f4d0a0"/>'
-    + '<rect x="28" y="26" width="6" height="6" fill="#3a2060"/>'
-    + '<rect x="38" y="26" width="6" height="6" fill="#3a2060"/>'
-    + '<rect x="29" y="26" width="2" height="2" fill="#fff"/>'
-    + '<rect x="39" y="26" width="2" height="2" fill="#fff"/>'
-    + '<rect x="28" y="24" width="2" height="2" fill="#3a2060"/>'
-    + '<rect x="32" y="24" width="2" height="2" fill="#3a2060"/>'
-    + '<rect x="38" y="24" width="2" height="2" fill="#3a2060"/>'
-    + '<rect x="42" y="24" width="2" height="2" fill="#3a2060"/>'
     + '<rect x="30" y="34" width="2" height="2" fill="#c47070"/>'
     + '<rect x="40" y="34" width="2" height="2" fill="#c47070"/>'
-    + '<rect x="32" y="36" width="8" height="2" fill="#c47070"/>'
     + '<rect x="22" y="32" width="6" height="4" fill="#f4a0a0" opacity="0.5"/>'
-    + '<rect x="44" y="32" width="6" height="4" fill="#f4a0a0" opacity="0.5"/>'
-    + '<rect x="18" y="40" width="36" height="30" fill="' + t.torso + '"/>'
-    + '<rect x="18" y="40" width="6" height="30" fill="' + t.mint + '"/>'
-    + '<rect x="48" y="40" width="6" height="30" fill="' + t.mint + '"/>'
-    + '<rect x="14" y="44" width="6" height="26" fill="' + t.mint2 + '"/>'
-    + '<rect x="52" y="44" width="6" height="26" fill="' + t.mint2 + '"/>'
-    + '<rect x="32" y="46" width="8" height="2" fill="' + t.mint3 + '"/>'
-    + '<rect x="35" y="43" width="2" height="8" fill="' + t.mint3 + '"/>'
-    + '<rect x="22" y="70" width="10" height="12" fill="' + t.mint2 + '"/>'
-    + '<rect x="40" y="70" width="10" height="12" fill="' + t.mint2 + '"/>'
-    + '<rect x="22" y="80" width="12" height="4" fill="' + t.mint3 + '"/>'
-    + '<rect x="38" y="80" width="12" height="4" fill="' + t.mint3 + '"/>';
+    + '<rect x="44" y="32" width="6" height="4" fill="#f4a0a0" opacity="0.5"/>';
 }
+
+const BODIES = {
+  healer: function (t) {
+    return ''
+      + '<ellipse cx="36" cy="8" rx="16" ry="4" fill="none" stroke="' + t.mint2 + '" stroke-width="2"/>'
+      + '<rect x="20" y="10" width="32" height="6" fill="' + t.mint3 + '"/>'
+      + '<rect x="16" y="14" width="40" height="4" fill="' + t.mint3 + '"/>'
+      + faceBase(t)
+      + '<rect x="28" y="26" width="6" height="6" fill="#3a2060"/>'
+      + '<rect x="38" y="26" width="6" height="6" fill="#3a2060"/>'
+      + '<rect x="29" y="26" width="2" height="2" fill="#fff"/>'
+      + '<rect x="39" y="26" width="2" height="2" fill="#fff"/>'
+      + '<rect x="28" y="24" width="2" height="2" fill="#3a2060"/>'
+      + '<rect x="32" y="24" width="2" height="2" fill="#3a2060"/>'
+      + '<rect x="38" y="24" width="2" height="2" fill="#3a2060"/>'
+      + '<rect x="42" y="24" width="2" height="2" fill="#3a2060"/>'
+      + '<rect x="32" y="36" width="8" height="2" fill="#c47070"/>'
+      + '<rect x="18" y="40" width="36" height="30" fill="' + t.torso + '"/>'
+      + '<rect x="18" y="40" width="6" height="30" fill="' + t.mint + '"/>'
+      + '<rect x="48" y="40" width="6" height="30" fill="' + t.mint + '"/>'
+      + '<rect x="14" y="44" width="6" height="26" fill="' + t.mint2 + '"/>'
+      + '<rect x="52" y="44" width="6" height="26" fill="' + t.mint2 + '"/>'
+      + '<rect x="32" y="46" width="8" height="2" fill="' + t.mint3 + '"/>'
+      + '<rect x="35" y="43" width="2" height="8" fill="' + t.mint3 + '"/>'
+      + '<rect x="22" y="70" width="10" height="12" fill="' + t.mint2 + '"/>'
+      + '<rect x="40" y="70" width="10" height="12" fill="' + t.mint2 + '"/>'
+      + '<rect x="22" y="80" width="12" height="4" fill="' + t.mint3 + '"/>'
+      + '<rect x="38" y="80" width="12" height="4" fill="' + t.mint3 + '"/>';
+  },
+  entertainer: function (t) {
+    return ''
+      + '<rect x="33" y="1" width="4" height="4" fill="' + t.mint + '"/>'
+      + '<rect x="32" y="5" width="7" height="3" fill="' + t.mint2 + '"/>'
+      + '<rect x="29" y="8" width="13" height="4" fill="' + t.mint2 + '"/>'
+      + '<rect x="26" y="12" width="19" height="3" fill="' + t.mint3 + '"/>'
+      + '<rect x="23" y="15" width="26" height="3" fill="' + t.mint3 + '"/>'
+      + faceBase(t)
+      + '<rect x="28" y="26" width="6" height="6" fill="#3a2060"/>'
+      + '<rect x="29" y="26" width="2" height="2" fill="#fff"/>'
+      + '<rect x="37" y="28" width="7" height="2" fill="#3a2060"/>'
+      + '<rect x="28" y="24" width="2" height="2" fill="#3a2060"/>'
+      + '<rect x="32" y="24" width="2" height="2" fill="#3a2060"/>'
+      + '<rect x="38" y="22" width="2" height="2" fill="#3a2060"/>'
+      + '<rect x="42" y="22" width="2" height="2" fill="#3a2060"/>'
+      + '<rect x="30" y="36" width="12" height="3" fill="#c47070"/>'
+      + '<rect x="18" y="40" width="36" height="20" fill="' + t.torso + '"/>'
+      + '<rect x="18" y="40" width="6" height="20" fill="' + t.mint + '"/>'
+      + '<rect x="48" y="40" width="6" height="20" fill="' + t.mint + '"/>'
+      + '<rect x="14" y="44" width="6" height="18" fill="' + t.mint2 + '"/>'
+      + '<rect x="52" y="44" width="6" height="18" fill="' + t.mint2 + '"/>'
+      + '<rect x="28" y="44" width="6" height="5" fill="' + t.mint3 + '"/>'
+      + '<rect x="38" y="44" width="6" height="5" fill="' + t.mint3 + '"/>'
+      + '<rect x="34" y="45" width="4" height="3" fill="' + t.mint2 + '"/>'
+      + '<rect x="16" y="60" width="10" height="10" fill="' + t.mint3 + '"/>'
+      + '<rect x="46" y="60" width="10" height="10" fill="' + t.mint3 + '"/>'
+      + '<rect x="24" y="70" width="8" height="12" fill="' + t.mint2 + '"/>'
+      + '<rect x="40" y="70" width="8" height="12" fill="' + t.mint2 + '"/>'
+      + '<rect x="20" y="82" width="4" height="2" fill="' + t.mint3 + '"/>'
+      + '<rect x="22" y="80" width="10" height="4" fill="' + t.mint3 + '"/>'
+      + '<rect x="48" y="82" width="4" height="2" fill="' + t.mint3 + '"/>'
+      + '<rect x="40" y="80" width="10" height="4" fill="' + t.mint3 + '"/>';
+  },
+  builder: function (t) {
+    return ''
+      + '<rect x="34" y="8" width="4" height="3" fill="' + t.mint2 + '"/>'
+      + '<rect x="20" y="9" width="32" height="7" fill="' + t.mint3 + '"/>'
+      + '<rect x="14" y="15" width="44" height="3" fill="' + t.mint3 + '"/>'
+      + faceBase(t)
+      + '<rect x="28" y="26" width="6" height="6" fill="#3a2060"/>'
+      + '<rect x="38" y="26" width="6" height="6" fill="#3a2060"/>'
+      + '<rect x="29" y="26" width="2" height="2" fill="#fff"/>'
+      + '<rect x="39" y="26" width="2" height="2" fill="#fff"/>'
+      + '<rect x="27" y="23" width="4" height="2" fill="#3a2060"/>'
+      + '<rect x="37" y="23" width="4" height="2" fill="#3a2060"/>'
+      + '<rect x="32" y="36" width="8" height="2" fill="#c47070"/>'
+      + '<rect x="18" y="40" width="36" height="30" fill="' + t.torso + '"/>'
+      + '<rect x="14" y="44" width="6" height="24" fill="' + t.mint + '"/>'
+      + '<rect x="52" y="44" width="6" height="24" fill="' + t.mint + '"/>'
+      + '<rect x="24" y="40" width="4" height="14" fill="' + t.mint2 + '"/>'
+      + '<rect x="44" y="40" width="4" height="14" fill="' + t.mint2 + '"/>'
+      + '<rect x="26" y="50" width="20" height="14" fill="' + t.mint2 + '"/>'
+      + '<rect x="30" y="54" width="12" height="8" fill="' + t.mint3 + '"/>'
+      + '<rect x="16" y="66" width="40" height="4" fill="' + t.mintDark + '"/>'
+      + '<rect x="34" y="66" width="4" height="4" fill="' + t.mint + '"/>'
+      + '<rect x="20" y="70" width="12" height="12" fill="' + t.mint2 + '"/>'
+      + '<rect x="40" y="70" width="12" height="12" fill="' + t.mint2 + '"/>'
+      + '<rect x="17" y="80" width="17" height="5" fill="' + t.mint3 + '"/>'
+      + '<rect x="38" y="80" width="17" height="5" fill="' + t.mint3 + '"/>';
+  }
+};
 
 /* 職業ごとの持ち物（ヒーラー=杖／エンターテイナー=マイク／ビルダー=ハンマー） */
 const PROPS = {
@@ -109,6 +180,7 @@ const BADGES = {
 };
 
 function buildCharSvg(theme, charKey) {
+  const body = (BODIES[charKey] || BODIES.healer)(theme);
   const prop = (PROPS[charKey] || PROPS.healer)(theme);
   const sparkles = ''
     + '<rect x="46" y="14" width="4" height="4" fill="' + theme.mint + '" opacity="0.9"/>'
@@ -116,7 +188,7 @@ function buildCharSvg(theme, charKey) {
     + '<rect x="2" y="32" width="3" height="3" fill="#60a5fa" opacity="0.7"/>'
     + '<rect x="10" y="12" width="3" height="3" fill="#fbbf24" opacity="0.8"/>';
   return '<svg width="72" height="86" viewBox="0 0 72 86" style="image-rendering:pixelated;" xmlns="http://www.w3.org/2000/svg">'
-    + charBody(theme) + prop + sparkles + '</svg>';
+    + body + prop + sparkles + '</svg>';
 }
 
 function buildBadgeSvg(theme, charKey) {
