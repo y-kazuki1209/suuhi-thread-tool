@@ -28,7 +28,20 @@
      negatives: ['「...」', '「...」', '「...」'],
      positives: ['...', '...', '...'],
      closing: '締めの一言。<br><strong>それ、才能ですよ。</strong>',
-     textPost: 'Threads用テキスト投稿文（「数秘N番が〇〇な理由」形式）'
+     textPost: 'Threads用テキスト投稿文（「数秘N番が〇〇な理由」形式）',
+
+     // カルーセルの配色（CSS変数 --mint/--mint2/--mint3/--mint-dark に対応）
+     theme: {
+       torso: '#xxxxxx',   // キャラのローブ胴体（最も薄い色）
+       mint:  '#xxxxxx',   // ローブ袖口・杖の玉など（薄め）
+       mint2: '#xxxxxx',   // メインアクセント（枠線・バッジ・タイトル文字色）
+       mint3: '#xxxxxx',   // 濃いめアクセント（襟・ブーツ・クラスラベル枠）
+       mintDark: '#xxxxxx' // 最も濃い色（CTAボタンの影）
+     },
+     // キャラクターの見た目セット（persona/generate.js の PROPS・BADGES で定義済み）
+     // 'healer'（杖+十字バッジ）/ 'entertainer'（マイク+星バッジ）/ 'builder'（ハンマー+ハンマーバッジ）
+     // 新しい職業を追加する場合は generate.js の PROPS / BADGES にも1エントリ追加する
+     charKey: 'healer'
    }
    ============================================================ */
 
@@ -87,7 +100,15 @@ module.exports = {
       '・仲良い人のためなら無限に動けるのに自分のためには動けない\n\n' +
       '優柔不断とか八方美人とかじゃなくて、これ才能です。\n' +
       'あなたがいるだけで場の空気が柔らかくなる、それって才能。\n\n' +
-      '自分の数秘、知りたい人はプロフのLINEから生年月日を送るだけで無料でキャリア数秘診断できます✨'
+      '自分の数秘、知りたい人はプロフのLINEから生年月日を送るだけで無料でキャリア数秘診断できます✨',
+    theme: {
+      torso: '#d0f5e8',
+      mint: '#a8f0d4',
+      mint2: '#6de0b2',
+      mint3: '#3ab882',
+      mintDark: '#0e3d26'
+    },
+    charKey: 'healer'
   },
 
   3: {
@@ -107,7 +128,7 @@ module.exports = {
         em: '計画立てるのは苦手すぎる',
         desc: 'これ、飽きっぽいんじゃなくて<br><strong>「ワクワクが正義」</strong>な本能。<br><br>NUMBERは楽しいと思った瞬間に<br>もう動き出している。',
         stats: [
-          { label: '瞬発力', color: '#6de0b2', val: 95 },
+          { label: '瞬発力', color: '#ff8a5c', val: 95 },
           { label: '計画性', color: '#a78bfa', val: 24 }
         ]
       },
@@ -144,7 +165,15 @@ module.exports = {
       '・褒められると調子に乗るけど本番になると急に緊張する\n\n' +
       '落ち着きがないとか調子いいとかじゃなくて、これ才能です。\n' +
       'あなたがいるだけで場が一気に楽しくなる、それって才能。\n\n' +
-      '自分の数秘、知りたい人はプロフのLINEから生年月日を送るだけで無料でキャリア数秘診断できます✨'
+      '自分の数秘、知りたい人はプロフのLINEから生年月日を送るだけで無料でキャリア数秘診断できます✨',
+    theme: {
+      torso: '#ffe4d6',
+      mint: '#ffb98f',
+      mint2: '#ff8a5c',
+      mint3: '#e8592e',
+      mintDark: '#4a1f10'
+    },
+    charKey: 'entertainer'
   },
 
   4: {
@@ -164,7 +193,7 @@ module.exports = {
         em: '絶対に崩したくない',
         desc: 'これ、頭が固いんじゃなくて<br><strong>「積み上げた土台を守る」</strong>本能。<br><br>NUMBERはコツコツ型の努力で<br>信頼を積み上げていく。',
         stats: [
-          { label: '継続力', color: '#6de0b2', val: 96 },
+          { label: '継続力', color: '#5eb8ea', val: 96 },
           { label: '柔軟性', color: '#a78bfa', val: 30 }
         ]
       },
@@ -201,6 +230,14 @@ module.exports = {
       '・頼られると断れないのに頼るのはめちゃくちゃ苦手\n\n' +
       '頭が固いとか真面目すぎるとかじゃなくて、これ才能です。\n' +
       'あなたが積み上げてきたものは誰にも真似できない、それって才能。\n\n' +
-      '自分の数秘、知りたい人はプロフのLINEから生年月日を送るだけで無料でキャリア数秘診断できます✨'
+      '自分の数秘、知りたい人はプロフのLINEから生年月日を送るだけで無料でキャリア数秘診断できます✨',
+    theme: {
+      torso: '#dceefb',
+      mint: '#a8d8f5',
+      mint2: '#5eb8ea',
+      mint3: '#1f7fbf',
+      mintDark: '#0d2a3d'
+    },
+    charKey: 'builder'
   }
 };
