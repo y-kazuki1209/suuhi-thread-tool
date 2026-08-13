@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>絶対に起きれる目覚まし時計</title>
+<link rel="stylesheet" href="style.css">
+
+<!-- iPhoneのホーム画面追加（PWA）対応 -->
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="目覚まし">
+<meta name="theme-color" content="#0b1220">
+<meta name="format-detection" content="telephone=no">
+</head>
+<body>
+
+<main class="app" id="app">
+  <header class="clock-header">
+    <div class="now-time" id="nowTime">--:--</div>
+    <div class="now-date" id="nowDate">----年--月--日（-）</div>
+  </header>
+
+  <section class="next-alarm" id="nextAlarmBox" hidden>
+    <span class="next-alarm-label">次のアラーム</span>
+    <span class="next-alarm-value" id="nextAlarmValue">--:--</span>
+  </section>
+
+  <section class="alarm-form">
+    <h2>アラームを追加</h2>
+    <form id="alarmForm">
+      <div class="form-row">
+        <label for="timeInput">時刻</label>
+        <input type="time" id="timeInput" required>
+      </div>
+      <div class="form-row">
+        <label for="labelInput">ラベル</label>
+        <input type="text" id="labelInput" placeholder="例：出社">
+      </div>
+      <div class="form-row days-row">
+        <label>繰り返し</label>
+        <div class="days-picker" id="daysPicker">
+          <button type="button" class="day-btn" data-day="1">月</button>
+          <button type="button" class="day-btn" data-day="2">火</button>
+          <button type="button" class="day-btn" data-day="3">水</button>
+          <button type="button" class="day-btn" data-day="4">木</button>
+          <button type="button" class="day-btn" data-day="5">金</button>
+          <button type="button" class="day-btn" data-day="6">土</button>
+          <button type="button" class="day-btn" data-day="0">日</button>
+        </div>
+      </div>
+      <p class="hint">未選択の場合は「今日／明日だけ鳴る」1回限りのアラームになります。</p>
+
+      <div class="form-row">
+        <label for="mathToggle">計算問題を解かないと止められない</label>
+        <input type="checkbox" id="mathToggle" checked>
+      </div>
+      <div class="form-row">
+        <label for="zeroSecondToggle">0秒思考メモ(紙に書く)を書かないと止められない</label>
+        <input type="checkbox" id="zeroSecondToggle" checked>
+      </div>
+      <p class="hint">紙とペンを使って手書きするフローです。両方ONの場合、計算問題→0秒思考メモの順に完了する必要があります。前夜に枕元へA4用紙(またはノート)とペンを用意しておきましょう。</p>
+      <div class="form-row">
+        <label for="snoozeLimitInput">スヌーズ回数の上限</label>
+        <input type="number" id="snoozeLimitInput" min="0" max="10" value="3">
+      </div>
+
+      <button type="submit" class="primary-btn">アラームを追加</button>
+    </form>
+  </section>
+
+  <section class="alarm-list">
+    <h2>アラーム一覧</h2>
+    <ul id="alarmList" class="alarm-items"></ul>
+    <p class="empty-msg" id="emptyMsg">まだアラームがありません。</p>
+  </section>
+
+  <section class="memo-history">
+    <div class="memo-history-head">
+      <h2>0秒思考 記録</h2>
+      <button type="button" class="clear-history-btn" id="clearHistoryBtn">全削除</button>
+    </div>
+    <p class="memo-stats" id="memoStats"></p>
+    <p class="hint">メモの中身は紙に手書きするため、ここには「いつ・どのお題で書いたか」だけが記録されます(内容はこのアプリには残りません)。</p>
+    <ul id="memoHistoryList" class="memo-history-items"></ul>
+    <p class="empty-msg" id="memoEmptyMsg">まだ記録がありません。朝アラームを解除すると、書いた回数がここに溜まっていきます。</p>
+  </section>
+
+  <section class="warning-box" id="permissionWarning" hidden>
+    ⚠️ このアプリはタブを開いたままにしておく必要があります（バックグラウンドのブラウザタブでは音が鳴らない場合があります）。可能であればこのタブをピン留めし、端末をスリープさせないでください。
+  </section>
+
+  <section class="ios-hint" id="iosInstallHint" hidden>
+    📱 <strong>iPhoneでの使い方</strong><br>
+    Safariの共有ボタン <span aria-hidden="true">⬆️</span> →「ホーム画面に追加」でアプリのように起動できます。<br>
+    確実に鳴らすために、就寝前に以下を確認してください。
+    <ul>
+      <li>本体側面の<strong>着信/サイレントスイッチ</strong>をオン（音が鳴る側）にする</li>
+      <li><strong>おやすみモード/集中モード</strong>をオフにするか、このアプリの通知を許可する</li>
+      <li>設定 →「画面表示と明るさ」→「自動ロック」を<strong>「なし」</strong>にする（充電しながら推奨）</li>
+      <li>このアプリの画面を開いたままにしておく</li>
+    </ul>
+  </section>
+
+  <button class="test-btn" id="testBtn" type="button">🔔 テスト（今すぐ鳴らす）</button>
+</main>
+
+<!-- iOSのサイレントスイッチ対策: WebAudioの出力をこのaudio要素経由で再生する -->
+<audio id="audioSink" playsinline style="display:none"></audio>
+
+<!-- 鳴動中オーバーレイ -->
+<div class="ringing-overlay" id="ringingOverlay" hidden>
+  <div class="ringing-content">
+    <div class="ringing-label">⏰ 起きる時間です！</div>
+    <div class="ringing-time" id="ringingTime">--:--</div>
+    <div class="ringing-alarm-label" id="ringingAlarmLabel"></div>
+    <div class="snooze-status" id="snoozeStatus"></div>
+
+    <div class="ringing-actions">
+      <button class="snooze-btn" id="snoozeBtn" type="button">😴 あと5分スヌーズ</button>
+      <button class="stop-btn" id="stopBtn" type="button">🛑 アラームを止める</button>
+    </div>
+  </div>
+</div>
+
+<!-- 計算チャレンジモーダル -->
+<div class="math-modal" id="mathModal" hidden>
+  <div class="math-content">
+    <div class="math-progress" id="mathProgress">問題 1 / 3</div>
+    <div class="math-question" id="mathQuestion">1 + 1 = ?</div>
+    <input type="number" class="math-answer" id="mathAnswer" inputmode="numeric" autocomplete="off">
+    <button class="primary-btn" id="mathSubmit" type="button">回答する</button>
+    <div class="math-feedback" id="mathFeedback"></div>
+  </div>
+</div>
+
+<!-- 0秒思考メモ モーダル(紙に手書きするフロー) -->
+<div class="zs-modal" id="zeroSecondModal" hidden>
+  <div class="zs-content">
+    <span class="zs-badge">0秒思考メモ ・ 紙に手書き</span>
+    <div class="zs-prompt-label">今日のお題</div>
+    <div class="zs-prompt" id="zsPrompt">タイトル</div>
+    <p class="zs-rule">
+      📝 <strong>A4用紙(またはノート)とペン</strong>を用意し、上のお題について<br>
+      <strong>4〜6行、各行20〜30字</strong>を目安に、思いついたまま<strong>手で</strong>書き出してください。<br>
+      文法や体裁は気にせず、スピード優先で。デバイスへの入力ではなく、紙に書くのがポイントです。
+    </p>
+    <div class="zs-timer-wrap">
+      <div class="zs-timer" id="zsTimer">1:00</div>
+      <div class="zs-timer-label">書き終わるまでの目安タイム</div>
+    </div>
+    <div class="zs-status" id="zsStatus">タイマーが0:00になったら、下のボタンを押せるようになります</div>
+    <button class="primary-btn" id="zsSubmit" type="button" disabled>紙に書き終えた</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
