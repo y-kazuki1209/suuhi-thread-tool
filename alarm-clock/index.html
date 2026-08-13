@@ -2,9 +2,20 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>絶対に起きれる目覚まし時計</title>
 <link rel="stylesheet" href="style.css">
+
+<!-- iPhoneのホーム画面追加（PWA）対応 -->
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="目覚まし">
+<meta name="theme-color" content="#0b1220">
+<meta name="format-detection" content="telephone=no">
 </head>
 <body>
 
@@ -67,8 +78,23 @@
     ⚠️ このアプリはタブを開いたままにしておく必要があります（バックグラウンドのブラウザタブでは音が鳴らない場合があります）。可能であればこのタブをピン留めし、端末をスリープさせないでください。
   </section>
 
+  <section class="ios-hint" id="iosInstallHint" hidden>
+    📱 <strong>iPhoneでの使い方</strong><br>
+    Safariの共有ボタン <span aria-hidden="true">⬆️</span> →「ホーム画面に追加」でアプリのように起動できます。<br>
+    確実に鳴らすために、就寝前に以下を確認してください。
+    <ul>
+      <li>本体側面の<strong>着信/サイレントスイッチ</strong>をオン（音が鳴る側）にする</li>
+      <li><strong>おやすみモード/集中モード</strong>をオフにするか、このアプリの通知を許可する</li>
+      <li>設定 →「画面表示と明るさ」→「自動ロック」を<strong>「なし」</strong>にする（充電しながら推奨）</li>
+      <li>このアプリの画面を開いたままにしておく</li>
+    </ul>
+  </section>
+
   <button class="test-btn" id="testBtn" type="button">🔔 テスト（今すぐ鳴らす）</button>
 </main>
+
+<!-- iOSのサイレントスイッチ対策: WebAudioの出力をこのaudio要素経由で再生する -->
+<audio id="audioSink" playsinline style="display:none"></audio>
 
 <!-- 鳴動中オーバーレイ -->
 <div class="ringing-overlay" id="ringingOverlay" hidden>

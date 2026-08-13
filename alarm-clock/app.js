@@ -68,7 +68,8 @@
 
   // ---------- audio (Web Audio API siren, no external files) ----------
   var audioCtx = null;
-  var oscNode = null, gainNode = null, sirenTimer = null;
+  var oscNode = null, gainNode = null, sirenTimer = null, mediaDest = null;
+  var audioSinkEl = document.getElementById('audioSink');
 
   function ensureAudioContext() {
     if (!audioCtx) {
@@ -82,9 +83,20 @@
     return audioCtx;
   }
   // Unlock audio on the first user interaction so the alarm can play later
-  // without needing a fresh gesture at the moment it fires.
-  document.addEventListener('click', ensureAudioContext, { capture: true });
-  document.addEventListener('touchstart', ensureAudioContext, { capture: true });
+  // without needing a fresh gesture at the moment it fires. On iOS this also
+  // primes the <audio> element used below to route sound around the silent switch.
+  function unlockAudio() {
+    ensureAudioContext();
+    if (audioSinkEl && audioSinkEl.paused) {
+      audioSinkEl.muted = true;
+      var p = audioSinkEl.play();
+      if (p && p.then) {
+        p.then(function () { audioSinkEl.pause(); audioSinkEl.muted = false; }).catch(function () { audioSinkEl.muted = false; });
+      }
+    }
+  }
+  document.addEventListener('click', unlockAudio, { capture: true });
+  document.addEventListener('touchstart', unlockAudio, { capture: true });
 
   function startAlarmSound() {
     var ctx = ensureAudioContext();
@@ -93,12 +105,27 @@
 
     gainNode = ctx.createGain();
     gainNode.gain.setValueAtTime(0.04, ctx.currentTime);
-    gainNode.connect(ctx.destination);
 
     oscNode = ctx.createOscillator();
     oscNode.type = 'square';
     oscNode.frequency.setValueAtTime(440, ctx.currentTime);
     oscNode.connect(gainNode);
+
+    // Route through a real <audio> element when possible. On iOS, sound played
+    // via a media element is treated as "media playback" rather than "ambient"
+    // audio, which is far more likely to still be audible even when the
+    // phone's physical Ring/Silent switch is set to silent.
+    if (audioSinkEl && ctx.createMediaStreamDestination) {
+      mediaDest = ctx.createMediaStreamDestination();
+      gainNode.connect(mediaDest);
+      audioSinkEl.muted = false;
+      audioSinkEl.srcObject = mediaDest.stream;
+      var playPromise = audioSinkEl.play();
+      if (playPromise && playPromise.catch) playPromise.catch(function () {});
+    } else {
+      gainNode.connect(ctx.destination);
+    }
+
     oscNode.start();
 
     // Siren-style pitch sweep so it's harder to sleep through.
@@ -120,6 +147,8 @@
     if (sirenTimer) { clearInterval(sirenTimer); sirenTimer = null; }
     if (oscNode) { try { oscNode.stop(); } catch (e) {} oscNode.disconnect(); oscNode = null; }
     if (gainNode) { gainNode.disconnect(); gainNode = null; }
+    if (mediaDest) { mediaDest.disconnect(); mediaDest = null; }
+    if (audioSinkEl) { try { audioSinkEl.pause(); } catch (e) {} audioSinkEl.srcObject = null; }
   }
 
   // ---------- wake lock (best-effort, keeps screen on while ringing) ----------
@@ -474,6 +503,18 @@
   tick();
   renderAlarmList();
 
-  // Show the "keep this tab open" warning; browsers throttle/mute background tabs.
-  $('permissionWarning').hidden = false;
+  // ---------- iPhone (iOS Safari) guidance ----------
+  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // iPadOS reports as Mac
+  var isStandalone = window.navigator.standalone === true ||
+    window.matchMedia('(display-mode: standalone)').matches;
+
+  if (isIOS && !isStandalone) {
+    // Not yet added to the Home Screen: show install + reliability instructions,
+    // and skip the generic "keep this tab open" warning to avoid duplicate advice.
+    $('iosInstallHint').hidden = false;
+  } else {
+    // Show the "keep this tab open" warning; browsers throttle/mute background tabs.
+    $('permissionWarning').hidden = false;
+  }
 })();

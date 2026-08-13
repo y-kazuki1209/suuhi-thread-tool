@@ -13,15 +13,19 @@
 }
 *{box-sizing:border-box;}
 [hidden]{display:none !important;}
+html{ height:100%; }
 body{
   margin:0;
   min-height:100vh;
+  min-height:100dvh;
   background:radial-gradient(circle at 50% -10%, #1c2947 0%, var(--bg) 55%);
   color:var(--text);
   font-family:'Hiragino Sans','Noto Sans JP',system-ui,sans-serif;
   display:flex;
   justify-content:center;
-  padding:24px 16px 80px;
+  -webkit-text-size-adjust:100%;
+  /* iPhoneのノッチ/ホームインジケーター領域を避ける(PWA/フルスクリーン時) */
+  padding:calc(24px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(80px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
 }
 .app{
   width:100%;
@@ -204,6 +208,20 @@ section h2{
   font-size:13px;
   line-height:1.6;
 }
+.ios-hint{
+  background:rgba(109,224,178,0.08);
+  border:1px solid rgba(109,224,178,0.3);
+  color:var(--text);
+  border-radius:10px;
+  padding:14px 16px;
+  font-size:13px;
+  line-height:1.7;
+}
+.ios-hint ul{
+  margin:10px 0 0;
+  padding-left:18px;
+}
+.ios-hint li{margin-bottom:4px;}
 
 .test-btn{
   align-self:center;
@@ -226,7 +244,7 @@ section h2{
   align-items:center;
   justify-content:center;
   z-index:1000;
-  padding:24px;
+  padding:calc(24px + env(safe-area-inset-top)) calc(24px + env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) calc(24px + env(safe-area-inset-left));
 }
 @keyframes flash{
   0%,100%{background-color:#7f1d1d;}
