@@ -60,10 +60,10 @@
         <input type="checkbox" id="mathToggle" checked>
       </div>
       <div class="form-row">
-        <label for="zeroSecondToggle">0秒思考メモを書かないと止められない</label>
+        <label for="zeroSecondToggle">0秒思考メモ(紙に書く)を書かないと止められない</label>
         <input type="checkbox" id="zeroSecondToggle" checked>
       </div>
-      <p class="hint">両方ONの場合、計算問題→0秒思考メモの順に完了する必要があります。</p>
+      <p class="hint">紙とペンを使って手書きするフローです。両方ONの場合、計算問題→0秒思考メモの順に完了する必要があります。前夜に枕元へA4用紙(またはノート)とペンを用意しておきましょう。</p>
       <div class="form-row">
         <label for="snoozeLimitInput">スヌーズ回数の上限</label>
         <input type="number" id="snoozeLimitInput" min="0" max="10" value="3">
@@ -81,11 +81,13 @@
 
   <section class="memo-history">
     <div class="memo-history-head">
-      <h2>0秒思考メモ履歴</h2>
+      <h2>0秒思考 記録</h2>
       <button type="button" class="clear-history-btn" id="clearHistoryBtn">全削除</button>
     </div>
+    <p class="memo-stats" id="memoStats"></p>
+    <p class="hint">メモの中身は紙に手書きするため、ここには「いつ・どのお題で書いたか」だけが記録されます(内容はこのアプリには残りません)。</p>
     <ul id="memoHistoryList" class="memo-history-items"></ul>
-    <p class="empty-msg" id="memoEmptyMsg">まだメモがありません。朝アラームを解除すると、ここに書いたメモが溜まっていきます。</p>
+    <p class="empty-msg" id="memoEmptyMsg">まだ記録がありません。朝アラームを解除すると、書いた回数がここに溜まっていきます。</p>
   </section>
 
   <section class="warning-box" id="permissionWarning" hidden>
@@ -136,18 +138,23 @@
   </div>
 </div>
 
-<!-- 0秒思考メモ モーダル -->
+<!-- 0秒思考メモ モーダル(紙に手書きするフロー) -->
 <div class="zs-modal" id="zeroSecondModal" hidden>
   <div class="zs-content">
-    <div class="zs-head">
-      <span class="zs-badge">0秒思考メモ</span>
-      <span class="zs-timer" id="zsTimer">1:00</span>
-    </div>
+    <span class="zs-badge">0秒思考メモ ・ 紙に手書き</span>
+    <div class="zs-prompt-label">今日のお題</div>
     <div class="zs-prompt" id="zsPrompt">タイトル</div>
-    <p class="zs-rule">4〜6行、各行20〜30字くらいで、思いついたまま書きましょう。文法や体裁は気にせず、スピード優先で。</p>
-    <textarea class="zs-textarea" id="zsTextarea" rows="6" placeholder="1行目&#10;2行目&#10;3行目&#10;4行目..."></textarea>
-    <div class="zs-progress" id="zsProgress">0 / 4行</div>
-    <button class="primary-btn" id="zsSubmit" type="button" disabled>書けた！アラームを止める</button>
+    <p class="zs-rule">
+      📝 <strong>A4用紙(またはノート)とペン</strong>を用意し、上のお題について<br>
+      <strong>4〜6行、各行20〜30字</strong>を目安に、思いついたまま<strong>手で</strong>書き出してください。<br>
+      文法や体裁は気にせず、スピード優先で。デバイスへの入力ではなく、紙に書くのがポイントです。
+    </p>
+    <div class="zs-timer-wrap">
+      <div class="zs-timer" id="zsTimer">1:00</div>
+      <div class="zs-timer-label">書き終わるまでの目安タイム</div>
+    </div>
+    <div class="zs-status" id="zsStatus">タイマーが0:00になったら、下のボタンを押せるようになります</div>
+    <button class="primary-btn" id="zsSubmit" type="button" disabled>紙に書き終えた</button>
   </div>
 </div>
 

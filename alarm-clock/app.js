@@ -223,6 +223,7 @@
 
   var memoHistoryList = $('memoHistoryList');
   var memoEmptyMsg = $('memoEmptyMsg');
+  var memoStatsEl = $('memoStats');
   var clearHistoryBtn = $('clearHistoryBtn');
 
   var ringingOverlay = $('ringingOverlay');
@@ -242,8 +243,7 @@
   var zeroSecondModal = $('zeroSecondModal');
   var zsTimerEl = $('zsTimer');
   var zsPromptEl = $('zsPrompt');
-  var zsTextarea = $('zsTextarea');
-  var zsProgressEl = $('zsProgress');
+  var zsStatusEl = $('zsStatus');
   var zsSubmitBtn = $('zsSubmit');
 
   // ---------- clock ----------
@@ -494,7 +494,9 @@
     if (e.key === 'Enter') { e.preventDefault(); submitMathAnswer(); }
   });
 
-  // ---------- 0-second-thinking memo (「ゼロ秒思考」メモ書き) ----------
+  // ---------- 0-second-thinking memo (「ゼロ秒思考」メモ書き・紙に手書き) ----------
+  // 内容はこのアプリでは入力/保存しない(本の趣旨どおり紙に手書きする)。
+  // アプリはお題の提示と「1分」の目安タイマー、完了の記録のみを担当する。
   var ZERO_SECOND_PROMPTS = [
     '今日の目標は？',
     '今、一番気になっていることは？',
@@ -510,20 +512,15 @@
     '最近気づいたことは？'
   ];
   var ZS_TOTAL_SECONDS = 60;
-  var ZS_MIN_LINES = 4;
-  var ZS_MIN_CHARS = 40;
 
-  var zsState = null; // {session, remaining, timerId}
+  var zsState = null; // {session, remaining, timerId, prompt}
 
   function openZeroSecondChallenge(session) {
     var prompt = ZERO_SECOND_PROMPTS[randInt(0, ZERO_SECOND_PROMPTS.length - 1)];
     zsState = { session: session, remaining: ZS_TOTAL_SECONDS, prompt: prompt };
     zsPromptEl.textContent = prompt;
-    zsTextarea.value = '';
     renderZsTimer();
-    updateZsValidation();
     zeroSecondModal.hidden = false;
-    setTimeout(function () { zsTextarea.focus(); }, 50);
 
     zsState.timerId = setInterval(function () {
       zsState.remaining -= 1;
@@ -539,24 +536,12 @@
     var m = Math.floor(zsState.remaining / 60);
     var s = zsState.remaining % 60;
     zsTimerEl.textContent = m + ':' + pad(s);
-    zsTimerEl.classList.toggle('zs-timeup', zsState.remaining <= 0);
+    var done = zsState.remaining <= 0;
+    zsTimerEl.classList.toggle('zs-timeup', done);
+    zsStatusEl.textContent = done ? '✅ 紙に書き終えたら、下のボタンを押してください' : 'タイマーが0:00になったら、下のボタンを押せるようになります';
+    zsStatusEl.classList.toggle('zs-ok', done);
+    zsSubmitBtn.disabled = !done;
   }
-
-  function zsLines() {
-    return zsTextarea.value.split('\n').map(function (l) { return l.trim(); }).filter(function (l) { return l.length > 0; });
-  }
-
-  function updateZsValidation() {
-    var lines = zsLines();
-    var totalChars = lines.join('').length;
-    var ok = lines.length >= ZS_MIN_LINES && totalChars >= ZS_MIN_CHARS;
-    zsProgressEl.textContent = lines.length + ' / ' + ZS_MIN_LINES + '行' + (ok ? '（OK！）' : '');
-    zsProgressEl.classList.toggle('zs-ok', ok);
-    zsSubmitBtn.disabled = !ok;
-    return ok;
-  }
-
-  zsTextarea.addEventListener('input', updateZsValidation);
 
   function closeZeroSecondChallenge() {
     if (zsState && zsState.timerId) clearInterval(zsState.timerId);
@@ -564,16 +549,11 @@
   }
 
   zsSubmitBtn.addEventListener('click', function () {
-    if (!zsState || !updateZsValidation()) return;
+    if (!zsState || zsState.remaining > 0) return;
     var session = zsState.session;
     if (!session.isTest) {
-      memos.unshift({
-        id: uid(),
-        createdAt: new Date().toISOString(),
-        prompt: zsState.prompt,
-        lines: zsLines()
-      });
-      if (memos.length > 200) memos.length = 200;
+      memos.unshift({ id: uid(), createdAt: new Date().toISOString(), prompt: zsState.prompt });
+      if (memos.length > 500) memos.length = 500;
       saveMemos();
       renderMemoHistory();
     }
@@ -582,16 +562,23 @@
     fullyStop(session);
   });
 
-  // ---------- memo history ----------
+  // ---------- memo history (紙に書いた「いつ・お題」だけを記録) ----------
   function renderMemoHistory() {
     memoHistoryList.innerHTML = '';
     memoEmptyMsg.hidden = memos.length > 0;
+
+    if (memos.length === 0) {
+      memoStatsEl.textContent = '';
+    } else {
+      var todayKey = new Date().toDateString();
+      var todayCount = memos.filter(function (m) { return new Date(m.createdAt).toDateString() === todayKey; }).length;
+      memoStatsEl.textContent = '今日 ' + todayCount + '枚 ・ 通算 ' + memos.length + '枚';
+    }
+
     memos.forEach(function (m) {
       var li = document.createElement('li');
       li.className = 'memo-item';
 
-      var details = document.createElement('details');
-      var summary = document.createElement('summary');
       var d = new Date(m.createdAt);
       var titleSpan = document.createElement('span');
       titleSpan.className = 'memo-item-title';
@@ -599,27 +586,16 @@
       var dateSpan = document.createElement('span');
       dateSpan.className = 'memo-item-date';
       dateSpan.textContent = (d.getMonth() + 1) + '/' + d.getDate() + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
-      summary.appendChild(titleSpan);
-      summary.appendChild(dateSpan);
 
-      var ol = document.createElement('ol');
-      ol.className = 'memo-item-lines';
-      (m.lines || []).forEach(function (line) {
-        var lineEl = document.createElement('li');
-        lineEl.textContent = line;
-        ol.appendChild(lineEl);
-      });
-
-      details.appendChild(summary);
-      details.appendChild(ol);
-      li.appendChild(details);
+      li.appendChild(titleSpan);
+      li.appendChild(dateSpan);
       memoHistoryList.appendChild(li);
     });
   }
 
   clearHistoryBtn.addEventListener('click', function () {
     if (memos.length === 0) return;
-    if (!confirm('0秒思考メモの履歴をすべて削除しますか？')) return;
+    if (!confirm('0秒思考の記録をすべて削除しますか？(紙のメモ自体は残ります)')) return;
     memos = [];
     saveMemos();
     renderMemoHistory();
