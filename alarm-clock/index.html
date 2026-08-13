@@ -112,6 +112,12 @@
 <!-- iOSのサイレントスイッチ対策: WebAudioの出力をこのaudio要素経由で再生する -->
 <audio id="audioSink" playsinline style="display:none"></audio>
 
+<!-- 待機中に一定時間操作がないと表示される、ほぼ真っ黒な省電力画面 -->
+<div class="idle-screen" id="idleScreen" hidden>
+  <div class="idle-clock" id="idleClock">--:--</div>
+  <div class="idle-hint">アラーム待機中 ・ タップで元の画面に戻ります</div>
+</div>
+
 <!-- 鳴動中オーバーレイ -->
 <div class="ringing-overlay" id="ringingOverlay" hidden>
   <div class="ringing-content">
@@ -142,6 +148,7 @@
 <div class="zs-modal" id="zeroSecondModal" hidden>
   <div class="zs-content">
     <span class="zs-badge">0秒思考メモ ・ 紙に手書き</span>
+    <p class="zs-sound-note">🔇 集中できるよう、アラーム音はここで止まっています</p>
     <div class="zs-prompt-label">今日のお題</div>
     <div class="zs-prompt" id="zsPrompt">タイトル</div>
     <p class="zs-rule">
