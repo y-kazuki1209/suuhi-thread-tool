@@ -248,6 +248,34 @@ section h2{
 .memo-item-title{color:var(--accent);font-weight:700;flex:1;}
 .memo-item-date{color:var(--muted);flex-shrink:0;}
 
+/* ===== 待機中の省電力(ほぼ真っ黒)画面 ===== */
+/* 画面を点けっぱなしにする必要があっても、明るいUIを表示し続けないための簡易スクリーンセーバー。
+   有機ELディスプレイでは黒に近い色ほど発光しないため、体感の明るさと消費電力を抑えられる。 */
+.idle-screen{
+  position:fixed;
+  inset:0;
+  background:#000;
+  z-index:900;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+  cursor:pointer;
+}
+.idle-clock{
+  font-size:15vw;
+  font-weight:300;
+  color:#3a3f4a;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:0.02em;
+}
+.idle-hint{
+  font-size:11px;
+  color:#22262e;
+  letter-spacing:0.04em;
+}
+
 .warning-box{
   background:rgba(251,191,36,0.1);
   border:1px solid rgba(251,191,36,0.35);
@@ -427,6 +455,11 @@ section h2{
   border-radius:999px;
   padding:3px 10px;
   margin-bottom:16px;
+}
+.zs-sound-note{
+  font-size:12px;
+  color:var(--accent);
+  margin:0 0 14px;
 }
 .zs-prompt-label{
   font-size:12px;

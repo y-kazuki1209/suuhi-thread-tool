@@ -226,6 +226,9 @@
   var memoStatsEl = $('memoStats');
   var clearHistoryBtn = $('clearHistoryBtn');
 
+  var idleScreen = $('idleScreen');
+  var idleClockEl = $('idleClock');
+
   var ringingOverlay = $('ringingOverlay');
   var ringingTimeEl = $('ringingTime');
   var ringingAlarmLabelEl = $('ringingAlarmLabel');
@@ -366,6 +369,7 @@
 
   // ---------- ringing flow ----------
   function startRinging(alarm, session) {
+    hideIdleScreen();
     ringingTimeEl.textContent = pad(new Date().getHours()) + ':' + pad(new Date().getMinutes());
     ringingAlarmLabelEl.textContent = alarm.label || '';
     updateSnoozeStatus(alarm, session);
@@ -516,6 +520,10 @@
   var zsState = null; // {session, remaining, timerId, prompt}
 
   function openZeroSecondChallenge(session) {
+    // 集中して書けるように、この段階ではアラーム音を止める(起床チェックは
+    // 直前の計算問題と、書き終えるまでの60秒待機ですでに満たしている)。
+    stopAlarmSound();
+
     var prompt = ZERO_SECOND_PROMPTS[randInt(0, ZERO_SECOND_PROMPTS.length - 1)];
     zsState = { session: session, remaining: ZS_TOTAL_SECONDS, prompt: prompt };
     zsPromptEl.textContent = prompt;
@@ -612,11 +620,38 @@
     startRinging(testAlarm, activeSession);
   });
 
+  // ---------- idle screen (画面を点けたままでも、ほぼ真っ黒にして光量を抑える) ----------
+  var IDLE_DIM_MS = 25000; // 25秒操作がなければ暗転
+  var lastActivityAt = Date.now();
+
+  function hideIdleScreen() {
+    idleScreen.hidden = true;
+  }
+  function showIdleScreen(now) {
+    idleClockEl.textContent = pad(now.getHours()) + ':' + pad(now.getMinutes());
+    idleScreen.hidden = false;
+  }
+  function resetIdleTimer() {
+    lastActivityAt = Date.now();
+    hideIdleScreen();
+  }
+  ['click', 'touchstart', 'keydown', 'input', 'scroll'].forEach(function (evt) {
+    document.addEventListener(evt, resetIdleTimer, { capture: true, passive: true });
+  });
+
   // ---------- main tick loop ----------
   function tick() {
     renderClock();
 
     var now = new Date();
+
+    if (!activeSession) {
+      if (!idleScreen.hidden) {
+        idleClockEl.textContent = pad(now.getHours()) + ':' + pad(now.getMinutes());
+      } else if (Date.now() - lastActivityAt > IDLE_DIM_MS) {
+        showIdleScreen(now);
+      }
+    }
 
     if (activeSession && activeSession.snoozeUntil) {
       if (now.getTime() >= activeSession.snoozeUntil) {
