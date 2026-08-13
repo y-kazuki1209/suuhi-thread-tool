@@ -2,9 +2,10 @@
   'use strict';
 
   var STORAGE_KEY = 'reliableAlarmClock.alarms.v1';
+  var MEMO_STORAGE_KEY = 'reliableAlarmClock.zeroSecondMemos.v1';
   var WEEKDAY_JA = ['日', '月', '火', '水', '木', '金', '土'];
 
-  /** @typedef {{id:string, time:string, label:string, days:number[], enabled:boolean, requireMath:boolean, snoozeLimit:number, _lastFiredKey:?string}} Alarm */
+  /** @typedef {{id:string, time:string, label:string, days:number[], enabled:boolean, requireMath:boolean, requireZeroSecond:boolean, snoozeLimit:number, _lastFiredKey:?string}} Alarm */
 
   /** @type {Alarm[]} */
   var alarms = loadAlarms();
@@ -29,6 +30,7 @@
           days: Array.isArray(a.days) ? a.days : [],
           enabled: !!a.enabled,
           requireMath: a.requireMath !== false,
+          requireZeroSecond: a.requireZeroSecond !== false,
           snoozeLimit: typeof a.snoozeLimit === 'number' ? a.snoozeLimit : 3,
           _lastFiredKey: null
         };
@@ -42,11 +44,27 @@
     var serializable = alarms.map(function (a) {
       return {
         id: a.id, time: a.time, label: a.label, days: a.days,
-        enabled: a.enabled, requireMath: a.requireMath, snoozeLimit: a.snoozeLimit
+        enabled: a.enabled, requireMath: a.requireMath, requireZeroSecond: a.requireZeroSecond,
+        snoozeLimit: a.snoozeLimit
       };
     });
     localStorage.setItem(STORAGE_KEY, JSON.stringify(serializable));
   }
+
+  // ---------- zero-second-thinking memo persistence ----------
+  function loadMemos() {
+    try {
+      var raw = localStorage.getItem(MEMO_STORAGE_KEY);
+      var parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }
+  function saveMemos() {
+    localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(memos));
+  }
+  var memos = loadMemos();
 
   // ---------- utils ----------
   function pad(n) { return String(n).padStart(2, '0'); }
@@ -197,10 +215,15 @@
   var labelInput = $('labelInput');
   var daysPicker = $('daysPicker');
   var mathToggle = $('mathToggle');
+  var zeroSecondToggle = $('zeroSecondToggle');
   var snoozeLimitInput = $('snoozeLimitInput');
   var alarmListEl = $('alarmList');
   var emptyMsg = $('emptyMsg');
   var testBtn = $('testBtn');
+
+  var memoHistoryList = $('memoHistoryList');
+  var memoEmptyMsg = $('memoEmptyMsg');
+  var clearHistoryBtn = $('clearHistoryBtn');
 
   var ringingOverlay = $('ringingOverlay');
   var ringingTimeEl = $('ringingTime');
@@ -215,6 +238,13 @@
   var mathAnswer = $('mathAnswer');
   var mathSubmit = $('mathSubmit');
   var mathFeedback = $('mathFeedback');
+
+  var zeroSecondModal = $('zeroSecondModal');
+  var zsTimerEl = $('zsTimer');
+  var zsPromptEl = $('zsPrompt');
+  var zsTextarea = $('zsTextarea');
+  var zsProgressEl = $('zsProgress');
+  var zsSubmitBtn = $('zsSubmit');
 
   // ---------- clock ----------
   function renderClock() {
@@ -259,7 +289,8 @@
         var dayText = a.days.length === 0
           ? '1回のみ'
           : a.days.slice().sort().map(function (d) { return WEEKDAY_JA[d]; }).join('');
-        metaDiv.textContent = (a.label ? a.label + ' ・ ' : '') + dayText + (a.requireMath ? ' ・ 計算問題あり' : '');
+        var tags = (a.requireMath ? ' ・ 計算問題あり' : '') + (a.requireZeroSecond ? ' ・ 0秒思考メモあり' : '');
+        metaDiv.textContent = (a.label ? a.label + ' ・ ' : '') + dayText + tags;
         main.appendChild(timeDiv);
         main.appendChild(metaDiv);
 
@@ -318,6 +349,7 @@
       days: selectedDays.slice(),
       enabled: true,
       requireMath: mathToggle.checked,
+      requireZeroSecond: zeroSecondToggle.checked,
       snoozeLimit: isNaN(limit) ? 3 : Math.max(0, limit),
       _lastFiredKey: null
     });
@@ -328,6 +360,7 @@
     selectedDays = [];
     daysPicker.querySelectorAll('.day-btn.active').forEach(function (b) { b.classList.remove('active'); });
     mathToggle.checked = true;
+    zeroSecondToggle.checked = true;
     snoozeLimitInput.value = 3;
   });
 
@@ -375,12 +408,22 @@
     ringingOverlay.hidden = true;
   });
 
+  // Decide what has to happen next before the alarm is allowed to fully stop.
+  // Order: math challenge (if enabled) -> zero-second-thinking memo (if enabled) -> stop.
+  function proceedToStop(session) {
+    if (session.alarm.requireZeroSecond) {
+      openZeroSecondChallenge(session);
+    } else {
+      fullyStop(session);
+    }
+  }
+
   stopBtn.addEventListener('click', function () {
     if (!activeSession) return;
     if (activeSession.alarm.requireMath) {
       openMathChallenge(activeSession);
     } else {
-      fullyStop(activeSession);
+      proceedToStop(activeSession);
     }
   });
 
@@ -438,7 +481,7 @@
       var session = mathState.session;
       mathModal.hidden = true;
       mathState = null;
-      fullyStop(session);
+      proceedToStop(session);
       return;
     }
     mathState.current = generateProblem(mathState.level);
@@ -451,12 +494,143 @@
     if (e.key === 'Enter') { e.preventDefault(); submitMathAnswer(); }
   });
 
+  // ---------- 0-second-thinking memo (「ゼロ秒思考」メモ書き) ----------
+  var ZERO_SECOND_PROMPTS = [
+    '今日の目標は？',
+    '今、一番気になっていることは？',
+    '今日絶対にやることは？',
+    '最近モヤモヤしていることは？',
+    '今日を最高の1日にするには？',
+    '今、不安に感じていることは？',
+    '今週中に片付けたいことは？',
+    '最近うれしかったことは？',
+    '今日会う人に伝えたいことは？',
+    '今の自分に足りないものは？',
+    '今日、何を優先すべきか？',
+    '最近気づいたことは？'
+  ];
+  var ZS_TOTAL_SECONDS = 60;
+  var ZS_MIN_LINES = 4;
+  var ZS_MIN_CHARS = 40;
+
+  var zsState = null; // {session, remaining, timerId}
+
+  function openZeroSecondChallenge(session) {
+    var prompt = ZERO_SECOND_PROMPTS[randInt(0, ZERO_SECOND_PROMPTS.length - 1)];
+    zsState = { session: session, remaining: ZS_TOTAL_SECONDS, prompt: prompt };
+    zsPromptEl.textContent = prompt;
+    zsTextarea.value = '';
+    renderZsTimer();
+    updateZsValidation();
+    zeroSecondModal.hidden = false;
+    setTimeout(function () { zsTextarea.focus(); }, 50);
+
+    zsState.timerId = setInterval(function () {
+      zsState.remaining -= 1;
+      if (zsState.remaining <= 0) {
+        zsState.remaining = 0;
+        clearInterval(zsState.timerId);
+      }
+      renderZsTimer();
+    }, 1000);
+  }
+
+  function renderZsTimer() {
+    var m = Math.floor(zsState.remaining / 60);
+    var s = zsState.remaining % 60;
+    zsTimerEl.textContent = m + ':' + pad(s);
+    zsTimerEl.classList.toggle('zs-timeup', zsState.remaining <= 0);
+  }
+
+  function zsLines() {
+    return zsTextarea.value.split('\n').map(function (l) { return l.trim(); }).filter(function (l) { return l.length > 0; });
+  }
+
+  function updateZsValidation() {
+    var lines = zsLines();
+    var totalChars = lines.join('').length;
+    var ok = lines.length >= ZS_MIN_LINES && totalChars >= ZS_MIN_CHARS;
+    zsProgressEl.textContent = lines.length + ' / ' + ZS_MIN_LINES + '行' + (ok ? '（OK！）' : '');
+    zsProgressEl.classList.toggle('zs-ok', ok);
+    zsSubmitBtn.disabled = !ok;
+    return ok;
+  }
+
+  zsTextarea.addEventListener('input', updateZsValidation);
+
+  function closeZeroSecondChallenge() {
+    if (zsState && zsState.timerId) clearInterval(zsState.timerId);
+    zeroSecondModal.hidden = true;
+  }
+
+  zsSubmitBtn.addEventListener('click', function () {
+    if (!zsState || !updateZsValidation()) return;
+    var session = zsState.session;
+    if (!session.isTest) {
+      memos.unshift({
+        id: uid(),
+        createdAt: new Date().toISOString(),
+        prompt: zsState.prompt,
+        lines: zsLines()
+      });
+      if (memos.length > 200) memos.length = 200;
+      saveMemos();
+      renderMemoHistory();
+    }
+    closeZeroSecondChallenge();
+    zsState = null;
+    fullyStop(session);
+  });
+
+  // ---------- memo history ----------
+  function renderMemoHistory() {
+    memoHistoryList.innerHTML = '';
+    memoEmptyMsg.hidden = memos.length > 0;
+    memos.forEach(function (m) {
+      var li = document.createElement('li');
+      li.className = 'memo-item';
+
+      var details = document.createElement('details');
+      var summary = document.createElement('summary');
+      var d = new Date(m.createdAt);
+      var titleSpan = document.createElement('span');
+      titleSpan.className = 'memo-item-title';
+      titleSpan.textContent = m.prompt;
+      var dateSpan = document.createElement('span');
+      dateSpan.className = 'memo-item-date';
+      dateSpan.textContent = (d.getMonth() + 1) + '/' + d.getDate() + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+      summary.appendChild(titleSpan);
+      summary.appendChild(dateSpan);
+
+      var ol = document.createElement('ol');
+      ol.className = 'memo-item-lines';
+      (m.lines || []).forEach(function (line) {
+        var lineEl = document.createElement('li');
+        lineEl.textContent = line;
+        ol.appendChild(lineEl);
+      });
+
+      details.appendChild(summary);
+      details.appendChild(ol);
+      li.appendChild(details);
+      memoHistoryList.appendChild(li);
+    });
+  }
+
+  clearHistoryBtn.addEventListener('click', function () {
+    if (memos.length === 0) return;
+    if (!confirm('0秒思考メモの履歴をすべて削除しますか？')) return;
+    memos = [];
+    saveMemos();
+    renderMemoHistory();
+  });
+
   // ---------- test alarm ----------
   testBtn.addEventListener('click', function () {
     if (activeSession) return;
     var testAlarm = {
       id: 'test', time: pad(new Date().getHours()) + ':' + pad(new Date().getMinutes()),
-      label: 'テストアラーム', days: [], enabled: true, requireMath: true, snoozeLimit: 3
+      label: 'テストアラーム', days: [], enabled: true, requireMath: true, requireZeroSecond: true, snoozeLimit: 3
     };
     activeSession = { alarm: testAlarm, snoozeCount: 0, snoozeUntil: null, isTest: true };
     startRinging(testAlarm, activeSession);
@@ -502,6 +676,7 @@
   setInterval(tick, 1000);
   tick();
   renderAlarmList();
+  renderMemoHistory();
 
   // ---------- iPhone (iOS Safari) guidance ----------
   var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||

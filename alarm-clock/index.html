@@ -60,6 +60,11 @@
         <input type="checkbox" id="mathToggle" checked>
       </div>
       <div class="form-row">
+        <label for="zeroSecondToggle">0秒思考メモを書かないと止められない</label>
+        <input type="checkbox" id="zeroSecondToggle" checked>
+      </div>
+      <p class="hint">両方ONの場合、計算問題→0秒思考メモの順に完了する必要があります。</p>
+      <div class="form-row">
         <label for="snoozeLimitInput">スヌーズ回数の上限</label>
         <input type="number" id="snoozeLimitInput" min="0" max="10" value="3">
       </div>
@@ -72,6 +77,15 @@
     <h2>アラーム一覧</h2>
     <ul id="alarmList" class="alarm-items"></ul>
     <p class="empty-msg" id="emptyMsg">まだアラームがありません。</p>
+  </section>
+
+  <section class="memo-history">
+    <div class="memo-history-head">
+      <h2>0秒思考メモ履歴</h2>
+      <button type="button" class="clear-history-btn" id="clearHistoryBtn">全削除</button>
+    </div>
+    <ul id="memoHistoryList" class="memo-history-items"></ul>
+    <p class="empty-msg" id="memoEmptyMsg">まだメモがありません。朝アラームを解除すると、ここに書いたメモが溜まっていきます。</p>
   </section>
 
   <section class="warning-box" id="permissionWarning" hidden>
@@ -119,6 +133,21 @@
     <input type="number" class="math-answer" id="mathAnswer" inputmode="numeric" autocomplete="off">
     <button class="primary-btn" id="mathSubmit" type="button">回答する</button>
     <div class="math-feedback" id="mathFeedback"></div>
+  </div>
+</div>
+
+<!-- 0秒思考メモ モーダル -->
+<div class="zs-modal" id="zeroSecondModal" hidden>
+  <div class="zs-content">
+    <div class="zs-head">
+      <span class="zs-badge">0秒思考メモ</span>
+      <span class="zs-timer" id="zsTimer">1:00</span>
+    </div>
+    <div class="zs-prompt" id="zsPrompt">タイトル</div>
+    <p class="zs-rule">4〜6行、各行20〜30字くらいで、思いついたまま書きましょう。文法や体裁は気にせず、スピード優先で。</p>
+    <textarea class="zs-textarea" id="zsTextarea" rows="6" placeholder="1行目&#10;2行目&#10;3行目&#10;4行目..."></textarea>
+    <div class="zs-progress" id="zsProgress">0 / 4行</div>
+    <button class="primary-btn" id="zsSubmit" type="button" disabled>書けた！アラームを止める</button>
   </div>
 </div>
 
