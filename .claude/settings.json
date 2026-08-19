@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "mcp__Google_Drive__read_file_content",
+      "ToolSearch",
+      "mcp__Google_Drive__search_files",
+      "WebFetch",
+      "mcp__Google_Drive__get_file_metadata"
+    ]
+  }
+}
